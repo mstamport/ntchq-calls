@@ -137,7 +137,18 @@ func dalGetExcelDataSet(requestedPageNumber string, rowsCount string, columnToSo
     }
 
     data.TotalPages =  strconv.Itoa(totalRecords / pageRowsCount)
-    data.Rows = dalExecuteProcedureWhichReturnsGenericDataSet("exec dbo.sHeadquarterCallReport ?, ?, ?, ?, ?", requestedPageNumber, rowsCount, columnToSort,  sortDirection,  filters)
+    data.Rows = dalExecuteProcedureWhichReturnsGenericDataSet("exec dbo.sHeadquarterCallReport_toExcel ?, ?, ?, ?, ?", requestedPageNumber, rowsCount, columnToSort,  sortDirection,  filters)
 
     return data;
+}
+
+func dalGetExcelColumnsSet(requestedPageNumber string, rowsCount string, columnToSort string, sortDirection string, filters string) ExcelColumnResults {
+   //var conn = getConn();
+
+    data := ExcelColumnResults {
+    }
+
+  
+    data.Rows = dalExecuteProcedureWhichReturnsGenericDataSet("exec dbo.sHeadQuarterCallExcelReportColumns")
+   return data;
 }

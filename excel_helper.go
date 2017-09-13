@@ -86,8 +86,8 @@ func sendHQCallToExcelReport(w http.ResponseWriter, r *http.Request){
    }
    
 
-
     data := dalGetExcelDataSet(requestedPageNumber, rowsCount, columnToSort, sortDirection, filterBuffer.String());
+    columndata := dalGetExcelColumnsSet(requestedPageNumber, rowsCount, columnToSort, sortDirection, filterBuffer.String());
 
 
     //Generate excel content
@@ -96,8 +96,6 @@ func sendHQCallToExcelReport(w http.ResponseWriter, r *http.Request){
     var row *xlsx.Row
     var err error
     var headerstyle *xlsx.Style
-    var categorystyle *xlsx.Style
-    var subcategorystyle *xlsx.Style
     var itemstyle *xlsx.Style
     var labelStyle *xlsx.Style
 
@@ -105,34 +103,13 @@ func sendHQCallToExcelReport(w http.ResponseWriter, r *http.Request){
     headerstyle = xlsx.NewStyle()
     headerstyle.Alignment.Horizontal = "center"
     headerstyle.Alignment.WrapText = true
-    headerstyle.Fill = *xlsx.NewFill("solid", "DFEFFC", "2E6E9E")
+    headerstyle.Font = *xlsx.NewFont(10, "Arial")
     headerstyle.Border = *xlsx.NewBorder("thin", "thin", "thin", "thin")
-    headerstyle.Border.LeftColor = "2E6E9E"
-    headerstyle.Border.RightColor = "2E6E9E"
-    headerstyle.Border.TopColor = "2E6E9E"
-    headerstyle.Border.BottomColor = "2E6E9E"
 
-    categorystyle = xlsx.NewStyle()
-    categorystyle.Alignment.WrapText = true
-    categorystyle.Fill = *xlsx.NewFill("solid", "AAD4FF", "2E6E9E")
-    categorystyle.Border = *xlsx.NewBorder("thin", "thin", "thin", "thin")
-    categorystyle.Border.LeftColor = "2E6E9E"
-    categorystyle.Border.RightColor = "2E6E9E"
-    categorystyle.Border.TopColor = "2E6E9E"
-    categorystyle.Border.BottomColor = "2E6E9E"
-
-    subcategorystyle = xlsx.NewStyle()
-    subcategorystyle.Alignment.WrapText = true
-    subcategorystyle.Fill = *xlsx.NewFill("solid", "E1E1E1", "2E6E9E")
-    subcategorystyle.Border = *xlsx.NewBorder("thin", "thin", "thin", "thin")
-    subcategorystyle.Border.LeftColor = "2E6E9E"
-    subcategorystyle.Border.RightColor = "2E6E9E"
-    subcategorystyle.Border.TopColor = "2E6E9E"
-    subcategorystyle.Border.BottomColor = "2E6E9E"
 
     itemstyle = xlsx.NewStyle()
     itemstyle.Alignment.WrapText = true
-    itemstyle.Font = *xlsx.NewFont(10, "Verdana")
+    itemstyle.Font = *xlsx.NewFont(10, "Arial")
     itemstyle.Border = *xlsx.NewBorder("thin", "thin", "thin", "thin")
     itemstyle.Border.LeftColor = "2E6E9E"
     itemstyle.Border.RightColor = "2E6E9E"
@@ -149,25 +126,24 @@ func sendHQCallToExcelReport(w http.ResponseWriter, r *http.Request){
     }
 
     row = sheet.AddRow()
+    addExcelCell(row, "HQ_HQID", headerstyle)
+    addExcelCell(row, "CallHQ_ID", headerstyle)
     addExcelCell(row, "Zone", headerstyle)
     addExcelCell(row, "Region", headerstyle)
     addExcelCell(row, "Territory_Owner", headerstyle)
     addExcelCell(row, "Type", headerstyle)
     addExcelCell(row, "Territory", headerstyle)
-    addExcelCell(row, "Headquarter_ID", headerstyle)
-    addExcelCell(row, "CallHeadquarterID", headerstyle)
     addExcelCell(row, "FirstCall", headerstyle)
     addExcelCell(row, "LastCall", headerstyle)
-    addExcelCell(row, "HeadquarterStatus", headerstyle)
-    addExcelCell(row, "HeadquarterNumber", headerstyle)
+    addExcelCell(row, "HQName", headerstyle)
+    addExcelCell(row, "HQStatus", headerstyle)
+    addExcelCell(row, "HQNumber", headerstyle)
     addExcelCell(row, "Address", headerstyle)
     addExcelCell(row, "City", headerstyle)
     addExcelCell(row, "State", headerstyle)
     addExcelCell(row, "Zip", headerstyle)
-    addExcelCell(row, "Headquarter", headerstyle)
     addExcelCell(row, "PrimaryWholesaler", headerstyle)
-    addExcelCell(row, "PWCustomerNumber", headerstyle)
-    addExcelCell(row, "HeadquarterID", headerstyle)
+    addExcelCell(row, "PrimaryWholesalerCustNumber", headerstyle)
     addExcelCell(row, "Frequency", headerstyle)
     addExcelCell(row, "Year", headerstyle)
     addExcelCell(row, "Week", headerstyle)
@@ -176,13 +152,18 @@ func sendHQCallToExcelReport(w http.ResponseWriter, r *http.Request){
     addExcelCell(row, "CallDate", headerstyle)
     addExcelCell(row, "CallType", headerstyle)
     addExcelCell(row, "LastDistributionCall", headerstyle)
-    addExcelCell(row, "TerritoryCoverage", headerstyle)
+    addExcelCell(row, "Territory Coverage", headerstyle)
     addExcelCell(row, "Notes", headerstyle)
     addExcelCell(row, "Contact", headerstyle)
-    addExcelCell(row, "ItemID", headerstyle)
-    addExcelCell(row, "ItemName", headerstyle)
-    addExcelCell(row, "Code", headerstyle)
+    for i := 0; i < len(columndata.Rows); i++ {
+      var elementRawData = columndata.Rows[i]
+      resultReflectionValue := reflect.ValueOf(elementRawData)
+      resultInterface := resultReflectionValue.Interface()
+      resultMap := resultInterface.(map[string]interface{}) 
+      addExcelCell(row, resultMap["ColumnName"].(string), itemstyle)
+    }
   
+
     for i := 0; i < len(data.Rows); i++ {
       var elementRawData = data.Rows[i]
       resultReflectionValue := reflect.ValueOf(elementRawData)
@@ -191,25 +172,24 @@ func sendHQCallToExcelReport(w http.ResponseWriter, r *http.Request){
 
        // item level row
        row = sheet.AddRow()
+       addExcelCell(row, resultMap["Headquarter_ID"].(string), itemstyle)
+       addExcelCell(row, resultMap["CallHeadquarterID"].(string), itemstyle)
        addExcelCell(row, resultMap["Zone"].(string), itemstyle)
        addExcelCell(row, resultMap["Region"].(string), itemstyle)
        addExcelCell(row, resultMap["Territory_Owner"].(string), itemstyle)
        addExcelCell(row, resultMap["Type"].(string), itemstyle)
        addExcelCell(row, resultMap["Territory"].(string), itemstyle)
-       addExcelCell(row, resultMap["Headquarter_ID"].(string), itemstyle)
-       addExcelCell(row, resultMap["CallHeadquarterID"].(string), itemstyle)
        addExcelCell(row, resultMap["FirstCall"].(string), itemstyle)
        addExcelCell(row, resultMap["LastCall"].(string), itemstyle)
+       addExcelCell(row, resultMap["Headquarter"].(string), itemstyle)
        addExcelCell(row, resultMap["HeadquarterStatus"].(string), itemstyle)
        addExcelCell(row, resultMap["HeadquarterNumber"].(string), itemstyle)
        addExcelCell(row, resultMap["Address"].(string), itemstyle)
        addExcelCell(row, resultMap["City"].(string), itemstyle)
        addExcelCell(row, resultMap["State"].(string), itemstyle)
        addExcelCell(row, resultMap["Zip"].(string), itemstyle)
-       addExcelCell(row, resultMap["Headquarter"].(string), itemstyle)
        addExcelCell(row, resultMap["PrimaryWholesaler"].(string), itemstyle)
        addExcelCell(row, resultMap["PWCustomerNumber"].(string), itemstyle)
-       addExcelCell(row, resultMap["HeadquarterID"].(string), itemstyle)
        addExcelCell(row, resultMap["Frequency"].(string), itemstyle)
        addExcelCell(row, resultMap["Year"].(string), itemstyle)
        addExcelCell(row, resultMap["Week"].(string), itemstyle)
@@ -221,16 +201,22 @@ func sendHQCallToExcelReport(w http.ResponseWriter, r *http.Request){
        addExcelCell(row, resultMap["TerritoryCoverage"].(string), itemstyle)
        addExcelCell(row, resultMap["Notes"].(string), itemstyle)
        addExcelCell(row, resultMap["Contact"].(string), itemstyle)
-       addExcelCell(row, resultMap["ItemID"].(string), itemstyle)
-       addExcelCell(row, resultMap["ItemName"].(string), itemstyle)
-       addExcelCell(row, resultMap["Code"].(string), itemstyle)
+       for x := 0; x < len(columndata.Rows); x++ {
+         var elementColumnData = columndata.Rows[x]
+         resultReflectionColValue := reflect.ValueOf(elementColumnData )
+         resultColInterface := resultReflectionColValue.Interface()
+         resultColMap := resultColInterface.(map[string]interface{}) 
+         addExcelCell(row, resultMap[resultColMap["ItemID"].(string)].(string), itemstyle)
+       }
+
+
     }
 
      
     //column formatting
    sheet.SetColWidth(0, 0, 29)
    sheet.SetColWidth(1, 9, 15) 
-   sheet.SetColWidth(28, 28, 150) 
+   sheet.SetColWidth(27, 27, 150) 
 
 
     // Write to IO bytes
